@@ -4,28 +4,49 @@ const { Server } = require("mongodb");
 var router = express.Router();
 const { connect, dbName } = require("../conn");
 
+
+
 async function test1(req,res){
 const client = await connect();
 
-    var dbo = client.db(dbName);
+      const dbo = client.db(dbName);
 
     if (!client) {
       res.send("SORRY CANNOT CONNECT TO DATABASE");
     } else {
       try {
+        
         var query = {
           uid: req.headers.uid,
         };
-
-        dbo
+        var query2 = {
+          uid: req.headers.uid,
+          devicename: req.headers.devicename,
+        };
+        if(req.headers.devicename){
+          dbo
           .collection("sensors")
-          .find(query)
+          .find(query2)
           .toArray(function (err, result) {
             if (query.uid == undefined) {
               res.send("Error");
             }
             res.send(result);
           });
+        }else{
+          dbo
+          .collection("sensors")
+          .find(query)
+          .toArray(function (err, result) {
+            if (query.uid == undefined) {
+              res.send("Error");
+            }
+            res.status(200).send(result);
+          });
+        }
+      
+
+
       } catch (e) {
         res.send(e);
       } finally {
@@ -40,31 +61,7 @@ router.get("/all", (req, res) => test1(req,res));
 
   
 //Get All
-router.get("/", (req, res) => {
-  const url =
-    "mongodb+srv://admin:1234@cluster0.z5vrr.mongodb.net/project_api?retryWrites=true&w=majority";
-  const dbName = "project_api";
-  MongoClient.connect(url, function (err, client) {
-    var dbo = client.db(dbName);
-    var query = {
-      uid: req.headers.uid,
-      devicename: req.headers.devicename,
-    };
-    dbo
-      .collection("sensors")
-      .find(
-        { "inputValue.type": "temp" },
-        { "inputValue.type": 1, "inputValue.value": 1 }
-      )
-      .toArray(function (err, result) {
-        if (query.uid == undefined) {
-          res.send("Error");
-        }
-        res.send(result);
-        client.close();
-      });
-  });
-});
+router.get("/", (req, res) => test1(req,res));
 
 //Get Last
 router.get("/last", (req, res) => {
@@ -133,13 +130,11 @@ router.post("/chart", (req, res) => {
       $push: {
         data_chart: {
           temperature:
-            req.body.temperature !== null ? req.body.temperature : "25.0",
-          humidity: req.body.humidity !== null ? req.body.humidity : "50",
-          light: req.body.light !== null ? req.body.light : "DISABLED",
-          timestamp:
-            req.body.timestamp !== null
-              ? req.body.timestamp
-              : Math.floor(Date.now() / 1000).toString(),
+            req.body.temperature || "25.0",
+            humidity: req.body.humidity || "50",
+            light: req.body.light ||"DISABLED",
+            timestamp:
+            req.body.timestamp || Math.floor(Date.now() / 1000).toString(),
         },
       },
     };

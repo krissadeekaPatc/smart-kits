@@ -26,7 +26,7 @@ async function getDeviceData(req,res){
                     "inputValue": {
                         "temperature": req.body.temperature || "25.0",
                         "humidity": req.body.humidity || "50",
-                        "light": req.body.light || "DISABLED",
+                        "light": req.body.light || "500",
                         "timestamp": req.body.timestamp || Math.floor(Date.now() / 1000).toString()
                     }
                 }
@@ -36,10 +36,21 @@ async function getDeviceData(req,res){
             const newData = {
                 uid: req.headers.uid,
                 "devicename": req.body.devicename,
+                "D1": "false",
+                "D2":  "false",
+                "D5": "false" ,
+                "D6": "0.0" ,
+                "automation": "false",
+                "data_chart": [{
+                    "temperature": req.body.temperature || "25.0",
+                    "humidity": req.body.humidity || "50",
+                    "light": req.body.light || "500",
+                    "timestamp": req.body.timestamp || Math.floor(Date.now() / 1000).toString()
+                }],
                 "inputValue": [{
                     "temperature": req.body.temperature || "25.0",
                     "humidity": req.body.humidity || "50",
-                    "light": req.body.light || "DISABLED",
+                    "light": req.body.light || "500",
                     "timestamp": req.body.timestamp || Math.floor(Date.now() / 1000).toString()
                 }]
             }
@@ -55,7 +66,7 @@ async function getDeviceData(req,res){
                     res.status(200).send(true)
                     client.close();
                 });
-                res.send(true);
+               
             }
             
 
