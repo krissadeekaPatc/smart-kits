@@ -4,15 +4,15 @@ const assert = require('assert');
 var express = require("express");
 const DB_URL= 'mongodb+srv://admin:1234@cluster0.z5vrr.mongodb.net/project_api?retryWrites=true&w=majority';
 const dbName = 'project_api';
-
+let client;
 
 async function connect() {
     try {
-        if (MongoClient && MongoClient.prototype.isConnected()) {
+        if (client && client.isConnected) {
             console.log("CONNECTED")
-            return MongoClient;
+            return client;
         }
-       const  client = await MongoClient.connect(DB_URL, {
+      client = await MongoClient.connect(DB_URL, {
             useNewUrlParser: true,
         }
      
