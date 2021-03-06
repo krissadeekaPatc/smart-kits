@@ -4,9 +4,8 @@ const { Server } = require("mongodb");
 var router = express.Router();
 const { connect, dbName } = require("../conn");
 
-router.get("/all", (req, res) => {
-  (async () => {
-    const client = await connect();
+async function test1(req,res){
+const client = await connect();
 
     var dbo = client.db(dbName);
 
@@ -33,8 +32,10 @@ router.get("/all", (req, res) => {
           client.close();
       }
     }
-  })();
-});
+}
+
+
+router.get("/all", (req, res) => test1(req,res));
 
 
   
