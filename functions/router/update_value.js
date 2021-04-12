@@ -1,120 +1,177 @@
-var MongoClient = require('mongodb').MongoClient;
-const { json } = require('body-parser');
+var MongoClient = require("mongodb").MongoClient;
+const { json } = require("body-parser");
 var express = require("express");
 var router = express.Router();
 const { connect, dbName } = require("../conn");
 
-
-
 async function getDeviceData(req, res) {
-    try {
-        const client = await connect();
-        if (!client) {
-            return res.send("CANNOT CONNECT TO DATABASE");
+  try {
+    const client = await connect();
+    if (!client) {
+      return res.send("CANNOT CONNECT TO DATABASE");
+    } else {
+      const db = client.db(dbName);
+
+      let sensorCollection = db.collection("sensors");
+      let usersCollection = db.collection("users");
+
+      const userQuery = {
+        // uid: req.headers.uid,
+        uniqueName: req.headers.uniqueName,
+      };
+      const users = await usersCollection.find(userQuery).toArray();
+      console.log(users);
+
+      req.body.forEach(async (element) => {
+        console.log("Users From Test");
+        console.log(users);
+        const myquery = {
+          uid: req.headers.uid,
+          devicename: element.devicename,
+        };
+
+        var updateValue = {
+          $push: {
+            inputValue: {
+              temperature: element.temperature || "25.0",
+              humidity: element.humidity || "50",
+              analog: element.analog || "500",
+              timestamp:
+                element.timestamp || Math.floor(Date.now() / 1000).toString(),
+            },
+          },
+        };
+        const newData = {
+          uid: req.headers.uid,
+          uniqueName: req.headers.uname,
+          devicename: element.devicename,
+
+          automations: [
+            {
+              module: "switch1",
+              action: "false",
+              end_time: "null",
+              mode: "กำหนดเอง",
+              node_target: "null",
+              operator: "null",
+              sensor_target: "null",
+              str_time: "null",
+              value: "null",
+            },
+            {
+              module: "switch2",
+              action: "false",
+              end_time: "null",
+              mode: "กำหนดเอง",
+              node_target: "null",
+              operator: "null",
+              sensor_target: "null",
+              str_time: "null",
+              value: "null",
+            },
+            {
+              module: "pwm",
+              action: "0",
+              end_time: "null",
+              mode: "กำหนดเอง",
+              node_target: "null",
+              operator: "null",
+              sensor_target: "null",
+              str_time: "null",
+              value: "null",
+            },
+          ],
+          data_chart: [
+            {
+              temperature: element.temperature || "25.0",
+              humidity: element.humidity || "50",
+              analog: element.analog || "500",
+              timestamp:
+                element.timestamp || Math.floor(Date.now() / 1000).toString(),
+            },
+          ],
+          inputValue: [
+            {
+              temperature: element.temperature || "25.0",
+              humidity: element.humidity || "50",
+              analog: element.analog || "500",
+              timestamp:
+                element.timestamp || Math.floor(Date.now() / 1000).toString(),
+            },
+          ],
+        };
+
+        const allDevice = await sensorCollection.find(myquery).toArray();
+
+        if (allDevice.length <= 0) {
+          await sensorCollection.insertOne(newData);
         } else {
-
-
-            const db = client.db(dbName);
-
-       
-     
-
-        let sensorCollection = db.collection("sensors");
-     
-
-
-        
-
-            for (var i = 0, len = req.body.length; i < len; i++) {
-
-
-                const myquery =  {
-                    uid: req.headers.uid,
-                   "devicename": req.body[i].devicename
-               };
-
-                var updateValue = {
-                    $push: {
-                        "inputValue": {
-                            "temperature": req.body[i].temperature || "25.0",
-                            "humidity": req.body[i].humidity || "50",
-                            "light": req.body[i].light || "500",
-                            "timestamp": req.body[i].timestamp || Math.floor(Date.now() / 1000).toString()
-                        }
-                    }
-                };
-    
-    
-                const newData = {
-                    uid: req.headers.uid,
-                    "devicename": req.body[i].devicename,
-                    "D1": "false",
-                    "D2": "false",
-                    "D5": "false",
-                    "D6": "0.0",
-                    "automation": "false",
-                    "data_chart": [{
-                        "temperature": req.body[i].temperature || "25.0",
-                        "humidity": req.body[i].humidity || "50",
-                        "light": req.body[i].light || "500",
-                        "timestamp": req.body[i].timestamp || Math.floor(Date.now() / 1000).toString()
-                    }],
-                    "inputValue": [{
-                        "temperature": req.body[i].temperature || "25.0",
-                        "humidity": req.body[i].humidity || "50",
-                        "light": req.body[i].light || "500",
-                        "timestamp": req.body[i].timestamp || Math.floor(Date.now() / 1000).toString()
-                    }]
-                }
-    
-    
-                const allDevice = await sensorCollection.find(myquery).toArray();
-    
-
-                if (allDevice.length <= 0) {
-                    console.log("index now is: " + i + "LENGTH is" + len )
-                    sensorCollection.insertOne(newData)
-                    if(i >= len){
-                        res.status(200).send(true);
-                    }
-                } else {
-
-                    sensorCollection.updateMany((myquery), updateValue, function (err, result) {
-                        console.log("index now issss: " + i + "LENGTH is" + len )
-                        if (err) {
-                            console.log("ERRORSSSSSSSS: " + err)
-                            throw err;
-                        }else if(i == len){
-                            res.status(200).send(true);
-                        }
-                        
-                       
-
-                    });
-
-                }
-
+          await sensorCollection.updateMany(
+            myquery,
+            updateValue,
+            function (err, result) {
+              if (err) {
+                console.log("ERRORSSSSSSSS: " + err);
+                throw err;
+              }
             }
-
-
-
-
-
+          );
         }
-    } catch (e) {
+      });
 
-        console.log("GET IN CATCH: " + e)
-        res.send("ERROR :" + e)
+      res.status(200).send(true);
     }
-
-
+  } catch (e) {
+    console.log("GET IN CATCH: " + e);
+    res.send("ERROR :" + e);
+  }
 }
 
+router.post("/", async (req, res) => await getDeviceData(req, res));
 
-router.post('/', async (req, res) => await getDeviceData(req, res));
+async function sendDataChart(req, res) {
+  try {
+    const client = await connect();
+    if (!client) {
+      return res.send("CANNOT CONNECT TO DATABASE");
+    } else {
+      const db = client.db(dbName);
 
+      let sensorCollection = db.collection("sensors");
 
+      req.body.forEach(async (element) => {
+        const myquery = {
+          uid: req.headers.uid,
+          devicename: element.devicename,
+        };
+        var newvalues = {
+          $push: {
+            data_chart: {
+              temperature: element.temperature || "25.0",
+              humidity: element.humidity || "50",
+              analog: element.analog || "DISABLED",
+              timestamp:
+                element.timestamp || Math.floor(Date.now() / 1000).toString(),
+            },
+          },
+        };
 
+        await sensorCollection.updateMany(
+          myquery,
+          newvalues,
+          function (err, result) {
+            if (err) throw err;
+          }
+        );
+      });
 
+      res.status(200).send(true);
+    }
+  } catch (e) {
+    console.log("GET IN CATCH: " + e);
+    res.send("ERROR :" + e);
+  }
+}
 
+router.post("/chart", async (req, res) => await sendDataChart(req, res));
 module.exports = router;

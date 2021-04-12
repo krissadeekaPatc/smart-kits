@@ -4,27 +4,24 @@ const { Server } = require("mongodb");
 var router = express.Router();
 const { connect, dbName } = require("../conn");
 
+async function getData(req, res) {
+  const client = await connect();
 
+  const dbo = client.db(dbName);
 
-async function test1(req,res){
-const client = await connect();
-
-      const dbo = client.db(dbName);
-
-    if (!client) {
-      res.send("SORRY CANNOT CONNECT TO DATABASE");
-    } else {
-      try {
-        
-        var query = {
-          uid: req.headers.uid,
-        };
-        var query2 = {
-          uid: req.headers.uid,
-          devicename: req.headers.devicename,
-        };
-        if(req.headers.devicename){
-          dbo
+  if (!client) {
+    res.send("SORRY CANNOT CONNECT TO DATABASE");
+  } else {
+    try {
+      var query = {
+        uid: req.headers.uid,
+      };
+      var query2 = {
+        uid: req.headers.uid,
+        devicename: req.headers.devicename,
+      };
+      if (req.headers.devicename) {
+        dbo
           .collection("sensors")
           .find(query2)
           .toArray(function (err, result) {
@@ -32,9 +29,10 @@ const client = await connect();
               res.send("Error");
             }
             res.send(result);
+            client.close();
           });
-        }else{
-          dbo
+      } else {
+        dbo
           .collection("sensors")
           .find(query)
           .toArray(function (err, result) {
@@ -42,26 +40,19 @@ const client = await connect();
               res.send("Error");
             }
             res.status(200).send(result);
+            client.close();
           });
-        }
-      
-
-
-      } catch (e) {
-        res.send(e);
-      } finally {
-          client.close();
       }
+    } catch (e) {
+      res.send(e);
     }
+  }
 }
 
+router.get("/all", (req, res) => getData(req, res));
 
-router.get("/all", (req, res) => test1(req,res));
-
-
-  
 //Get All
-router.get("/", (req, res) => test1(req,res));
+router.get("/", (req, res) => getData(req, res));
 
 //Get Last
 router.get("/last", (req, res) => {
@@ -105,9 +96,9 @@ router.get("/chart", (req, res) => {
         }
 
         var chart =
-          result[0].data_chart.length >= 6
+          result[0].data_chart.length >= 25
             ? result[0].data_chart.slice(
-                Math.max(result[0].data_chart.length - 6)
+                Math.max(result[0].data_chart.length - 25)
               )
             : result[0].data_chart;
         res.send(chart);
@@ -129,11 +120,10 @@ router.post("/chart", (req, res) => {
     var newvalues = {
       $push: {
         data_chart: {
-          temperature:
-            req.body.temperature || "25.0",
-            humidity: req.body.humidity || "50",
-            light: req.body.light ||"DISABLED",
-            timestamp:
+          temperature: req.body.temperature || "25.0",
+          humidity: req.body.humidity || "50",
+          analog: req.body.analog || "DISABLED",
+          timestamp:
             req.body.timestamp || Math.floor(Date.now() / 1000).toString(),
         },
       },
