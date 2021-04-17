@@ -14,16 +14,10 @@ async function addTokenFCM(req, res) {
       let projection = {
         _id: false,
         registrationTokens: true,
-
-        // email: false,
-        // password: false,
       };
       let query = {
         registrationTokens: {
-          $in: [
-            req.body.fcmtoken,
-            // "d3lQuWNDTEmLpOVYH8km5X:APA91bFfxeeoT7shqAlm2gL-Ouhe2qFRXKV-sUEIyUpwThm0L4hVKmiy3yyL0sFYyJ4z44d0b2SOJApY4hi6IhCgv_RXPLeYeF3wUnwvjDAjnLCjXf8RHo662PgOXGSv5rMed4AnQeHa",
-          ],
+          $in: [req.body.fcmtoken],
         },
       };
 

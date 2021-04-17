@@ -60,6 +60,7 @@ router.post("/", (req, res) => {
       email: req.body.email,
       password: req.body.password,
       uniqueName: req.body.uniqueName,
+      phone: req.body.phone,
       // registrationTokens: [],
     };
     const myQuery = {
