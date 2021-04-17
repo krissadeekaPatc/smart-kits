@@ -33,16 +33,24 @@ async function addTokenFCM(req, res) {
       let myquery = {
         uid: req.headers.uid,
       };
-      if (userToken.length < 1) {
-        userCollection.updateMany(myquery, updateValue, function (err, result) {
-          if (err) {
-            console.log("ERRORSSSSSSSS: " + err);
-            throw err;
-          }
-          res.status(200).send(true);
-        });
+      if (req.body.fcmtoken === undefined) {
+        res.status(404).send("ERROR");
       } else {
-        res.status(400).send("Already added!");
+        if (userToken.length < 1) {
+          userCollection.updateMany(
+            myquery,
+            updateValue,
+            function (err, result) {
+              if (err) {
+                console.log("ERRORSSSSSSSS: " + err);
+                throw err;
+              }
+              res.status(200).send(true);
+            }
+          );
+        } else {
+          res.status(400).send("Already added!");
+        }
       }
     }
   } catch (e) {
@@ -52,4 +60,32 @@ async function addTokenFCM(req, res) {
 }
 router.patch("/", (req, res) => addTokenFCM(req, res));
 
+async function deleteTokenFCM(req, res) {
+  try {
+    const client = await connect();
+    if (!client) {
+      return res.send("CANNOT CONNECT TO DATABASE");
+    } else {
+      const db = client.db(dbName);
+
+      let userCollection = db.collection("users");
+      let query = {
+        uid: req.headers.uid,
+      };
+      let value = {
+        $pull: { registrationTokens: req.body.token },
+      };
+      userCollection.updateOne(query, value, function (err, result) {
+        if (err) throw err;
+        if (result) {
+          res.status(200).send(result);
+        }
+      });
+    }
+  } catch (e) {
+    console.log("GET IN CATCH: " + e);
+    res.send("ERROR :" + e);
+  }
+}
+router.patch("/delete", (req, res) => deleteTokenFCM(req, res));
 module.exports = router;

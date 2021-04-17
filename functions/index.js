@@ -17,8 +17,8 @@ admin.initializeApp({
   databaseURL: "https://smartfarmkits-default-rtdb.firebaseio.com",
 });
 
-const port = 5000;
-app.listen(port, () => console.log(`Listening on port${port}...`));
+const port = 3000;
+app.listen(port, () => console.log(`Listening on port ${port}...`));
 
 var sensorget = require("./router/sensor_get");
 app.use("/sensorget", sensorget);
@@ -53,6 +53,6 @@ app.use("/delete_device", deleteDevice);
 var fcmCheck = require("./router/fcm_token");
 app.use("/fcm_check", fcmCheck);
 
-app.get("/",(req,res)=>{
-  res.send("node")
-})
+app.get("/", (req, res) => {
+  res.send("node");
+});
