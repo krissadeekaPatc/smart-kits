@@ -3,7 +3,7 @@ const { json } = require("body-parser");
 var express = require("express");
 var router = express.Router();
 const admin = require("firebase-admin");
-
+const { connect, dbName } = require("../conn");
 router.post("/", (req, res) => {
   const url =
     "mongodb+srv://admin:1234@cluster0.z5vrr.mongodb.net/project_api?retryWrites=true&w=majority";
@@ -12,15 +12,25 @@ router.post("/", (req, res) => {
     if (err) throw err;
     var dbo = client.db(dbName);
     var query = { uid: req.headers.uid };
+    var newvalues = {
+      $push: {
+        notification: {
+          title: req.body.title,
+          body: req.body.message,
+          timestamp:
+            req.body.timestamp || Math.floor(Date.now() / 1000).toString(),
+        },
+      },
+    };
+
     dbo
       .collection("users")
       .find(query)
-      .toArray(function (err, result) {
+      .toArray(async function (err, result) {
         if (err) throw err;
         const tokens = result[0];
         const tokensList = Object.values(tokens.registrationTokens);
 
-        console.log(tokensList);
         let payload = {
           notification: {
             title: req.body.title,
@@ -29,36 +39,42 @@ router.post("/", (req, res) => {
           },
         };
         admin.messaging().sendToDevice(tokensList, payload);
+        await dbo
+          .collection("notification")
+          .updateMany(query, newvalues, function (err, result) {
+            if (err) throw err;
+          });
 
         res.send("SENT!😤😤😤😤");
-
-        // client.close();
       });
   });
 });
 
-// router.post("/", (req, res) => {
-//   const url =
-//     "mongodb+srv://admin:1234@cluster0.z5vrr.mongodb.net/project_api?retryWrites=true&w=majority";
-//   const dbName = "project_api";
-
-//   // MongoClient.connect(url, function (err, client) {
-//   //     if (err) throw err;
-//   //     var dbo = client.db(dbName);
-//   //     var myquery = {
-//   //         uid: req.headers.uid,
-//   //     };
-//   //     var newvalues = {
-//   //         $push: {
-//   //             "notifications": { "title": req.body.title, "body": req.body.body, "data": req.body.data !==null ? req.body.data : {}, "timestamp": req.body.timestamp !==null ? req.body.timestamp: Math.floor(Date.now() / 1000).toString() }
-//   //         }
-//   //     };
-//   //     dbo.collection("users").updateMany(myquery, newvalues, function (err, result) {
-//   //         if (err) throw err;
-//   //         res.status(200).send(true)
-//   //         client.close();
-//   //     });
-//   // });
-// });
-
+router.get("/", async (req, res) => {
+  const client = await connect();
+  const dbo = client.db(dbName);
+  if (!client) {
+    res.send("SORRY CANNOT CONNECT TO DATABASE");
+  } else {
+    try {
+      let projection = {
+        _id: false,
+        uid: false,
+      };
+      var query = {
+        uid: req.headers.uid,
+      };
+      dbo
+        .collection("notification")
+        .find(query, { projection })
+        .toArray(function (err, result) {
+          if (err) throw err;
+          res.send(result);
+          client.close();
+        });
+    } catch (e) {
+      res.send(e);
+    }
+  }
+});
 module.exports = router;
