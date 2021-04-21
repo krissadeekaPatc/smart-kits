@@ -131,6 +131,7 @@ async function toggleIsRead(req, res) {
           "notification.$.isRead": req.body.isRead,
         },
       };
+
       notificationCollection.updateMany(
         myquery,
         newvalues,
