@@ -112,6 +112,36 @@ async function deleteNotification(req, res) {
 
 router.patch("/delete", (req, res) => deleteNotification(req, res));
 
+async function clearNotification(req, res) {
+  try {
+    const client = await connect();
+    if (!client) {
+      return res.send("CANNOT CONNECT TO DATABASE");
+    } else {
+      const db = client.db(dbName);
+
+      let userCollection = db.collection("notification");
+      let query = {
+        uid: req.headers.uid,
+      };
+      let value = {
+        $set: { notification: [] },
+      };
+      userCollection.updateOne(query, value, function (err, result) {
+        if (err) throw err;
+        if (result) {
+          res.status(200).send(result);
+        }
+      });
+    }
+  } catch (e) {
+    console.log("GET IN CATCH: " + e);
+    res.send("ERROR :" + e);
+  }
+}
+
+router.patch("/clear", (req, res) => clearNotification(req, res));
+
 async function toggleIsRead(req, res) {
   try {
     const client = await connect();
