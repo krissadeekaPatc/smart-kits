@@ -20,6 +20,7 @@ router.post("/", (req, res) => {
           title: req.body.title,
           body: req.body.message,
           nID: shortid.generate(),
+          isRead: "false",
           timestamp:
             req.body.timestamp || Math.floor(Date.now() / 1000).toString(),
         },
@@ -110,5 +111,41 @@ async function deleteNotification(req, res) {
 }
 
 router.patch("/delete", (req, res) => deleteNotification(req, res));
+
+async function toggleIsRead(req, res) {
+  try {
+    const client = await connect();
+    if (!client) {
+      return res.send("CANNOT CONNECT TO DATABASE");
+    } else {
+      const db = client.db(dbName);
+
+      let notificationCollection = db.collection("notification");
+
+      const myquery = {
+        uid: req.headers.uid,
+        "notification.nID": req.body.id,
+      };
+      var newvalues = {
+        $set: {
+          "notification.$.isRead": req.body.isRead,
+        },
+      };
+      notificationCollection.updateMany(
+        myquery,
+        newvalues,
+        function (err, result) {
+          if (err) throw err;
+          res.status(200).send(result);
+        }
+      );
+    }
+  } catch (e) {
+    console.log("GET IN CATCH: " + e);
+    res.send("ERROR :" + e);
+  }
+}
+
+router.patch("/isRead", async (req, res) => await toggleIsRead(req, res));
 
 module.exports = router;
