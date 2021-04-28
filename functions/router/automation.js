@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { connect, dbName } = require("../conn");
-
+let mqtt = require("mqtt");
+let clients;
 router.get("/get_automation", async (req, res) => {
   try {
     const client = await connect();
@@ -39,6 +40,12 @@ router.patch("/", async (req, res) => {
     if (!client) {
       throw new Error("error to connect");
     } else {
+      if (!clients) {
+        clients = await mqtt.connect({
+          host: "pigateway.sytes.net",
+          port: "1883",
+        });
+      }
       const db = client.db(dbName);
       let query = {
         uid: req.headers.uid,
@@ -63,6 +70,8 @@ router.patch("/", async (req, res) => {
           if (err) throw err;
           if (result) {
             res.status(200).send("seccess : status 200");
+            let mqttTopic = req.body.uniqueName + "/0/sensor/0/0/0";
+            clients.publish(mqttTopic, "trig_to_update");
             client.close();
           }
         });
