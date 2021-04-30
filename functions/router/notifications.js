@@ -19,6 +19,7 @@ router.post("/", (req, res) => {
         notification: {
           title: req.body.title,
           body: req.body.message,
+          devicename: req.body.devicename,
           nID: shortid.generate(),
           isRead: "false",
           timestamp:
