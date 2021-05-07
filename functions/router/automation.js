@@ -97,6 +97,7 @@ router.get("/active-sensors", async (req, res) => {
       let projection = {
         _id: 0,
         devicename: 1,
+        isLight: true,
         inputValue: {
           $slice: ["$inputValue", -1],
         },
@@ -123,6 +124,7 @@ router.get("/active-sensors", async (req, res) => {
           data.push({
             devicename: element.devicename,
             sensor: "analog",
+            isLight: element.isLight,
           });
         }
       });
