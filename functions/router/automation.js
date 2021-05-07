@@ -19,6 +19,7 @@ router.get("/get_automation", async (req, res) => {
         devicename: true,
         uniqueName: true,
         automations: true,
+        isLight: true,
       };
       await db
         .collection("sensors")

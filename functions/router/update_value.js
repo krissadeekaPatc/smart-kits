@@ -23,8 +23,6 @@ async function getDeviceData(req, res) {
       console.log(users);
 
       req.body.forEach(async (element) => {
-        console.log("Users From Test");
-        console.log(users);
         const myquery = {
           uid: req.headers.uid,
           devicename: element.devicename,
